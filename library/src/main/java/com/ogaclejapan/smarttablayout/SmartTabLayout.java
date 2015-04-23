@@ -34,6 +34,9 @@ import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * To be used with ViewPager to provide a tab indicator component which give constant feedback as to
  * the user's scroll progress.
@@ -449,6 +452,55 @@ public class SmartTabLayout extends HorizontalScrollView {
                     return;
                 }
             }
+        }
+    }
+
+    public void createTabView(Func4<ViewGroup, Integer, PagerAdapter, View> onCreateTabView) {
+        mTabProvider = new SimplerTabProvider().createTabView(onCreateTabView);
+    }
+
+    public SmartTabLayout addTabView(Func4<ViewGroup, Integer, PagerAdapter, View> onCreateTabView) {
+        if (mComplexTabProvider == null) mComplexTabProvider = new ComplexTabProvider();
+        mTabProvider = mComplexTabProvider;
+        mComplexTabProvider.add(onCreateTabView);
+        return this;
+    }
+
+    private ComplexTabProvider mComplexTabProvider;
+
+    public interface Func4<T1, T2, T3, T4> {
+        T4 call(T1 t1, T2 t2, T3 t3);
+    }
+
+    private static class ComplexTabProvider implements TabProvider {
+        private List<Func4<ViewGroup, Integer, PagerAdapter, View>> onCreateTabViews = new ArrayList<>();
+
+        @Override
+        public View createTabView(ViewGroup container, int position, PagerAdapter adapter) {
+            return onCreateTabViews.get(position).call(container, position, adapter);
+        }
+
+        public ComplexTabProvider add(Func4<ViewGroup, Integer, PagerAdapter, View> onCreateTabView) {
+            this.onCreateTabViews.add(onCreateTabView);
+            return this;
+        }
+
+        public int getCount() {
+            return onCreateTabViews.size();
+        }
+    }
+
+    private static class SimplerTabProvider implements TabProvider {
+        private Func4<ViewGroup, Integer, PagerAdapter, View> onCreateTabView;
+
+        @Override
+        public View createTabView(ViewGroup container, int position, PagerAdapter adapter) {
+            return onCreateTabView.call(container, position, adapter);
+        }
+
+        public SimplerTabProvider createTabView(Func4<ViewGroup, Integer, PagerAdapter, View> onCreateTabView) {
+            this.onCreateTabView = onCreateTabView;
+            return this;
         }
     }
 
